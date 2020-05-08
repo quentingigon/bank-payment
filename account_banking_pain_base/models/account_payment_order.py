@@ -489,7 +489,15 @@ class AccountPaymentOrder(models.Model):
     def generate_remittance_info_block(self, parent_node, line, gen_args):
         remittance_info = etree.SubElement(
             parent_node, 'RmtInf')
-        if line.communication_type == 'normal':
+        if line.local_instrument == "LSV+":
+            remittance_info_unstructured = etree.SubElement(
+                remittance_info, 'Ustrd')
+            remittance_info_unstructured.text = self._prepare_field(
+                    'Remittance Unstructured Information',
+                    'line.communication', {'line': line}, 140,
+                    gen_args=gen_args)
+
+        if line.communication_type == 'normal' and line.local_instrument != "LSV+":
             remittance_info_unstructured = etree.SubElement(
                 remittance_info, 'Ustrd')
             remittance_info_unstructured.text = \
@@ -509,10 +517,6 @@ class AccountPaymentOrder(models.Model):
                     creditor_ref_info_type, 'Cd')
                 creditor_ref_info_type_code.text = 'SCOR'
                 # SCOR means "Structured Communication Reference"
-                creditor_ref_info_type_issuer = etree.SubElement(
-                    creditor_ref_info_type, 'Issr')
-                creditor_ref_info_type_issuer.text = \
-                    line.communication_type
                 creditor_reference = etree.SubElement(
                     creditor_ref_information, 'CdtrRef')
             else:
@@ -522,21 +526,13 @@ class AccountPaymentOrder(models.Model):
                     creditor_ref_info_type_or = etree.SubElement(
                         creditor_ref_info_type, 'CdOrPrtry')
                     creditor_ref_info_type_code = etree.SubElement(
-                        creditor_ref_info_type_or, 'Cd')
-                    creditor_ref_info_type_code.text = 'SCOR'
-                    creditor_ref_info_type_issuer = etree.SubElement(
-                        creditor_ref_info_type, 'Issr')
-                    creditor_ref_info_type_issuer.text = \
-                        line.communication_type
+                        creditor_ref_info_type_or, 'Prtry')
+                    creditor_ref_info_type_code.text = 'ESR'
 
                 creditor_reference = etree.SubElement(
                     creditor_ref_information, 'Ref')
 
-            creditor_reference.text = \
-                self._prepare_field(
-                    'Creditor Structured Reference',
-                    'line.communication', {'line': line}, 35,
-                    gen_args=gen_args)
+            creditor_reference.text = line.payment_line_ids[0].communication
         return True
 
     @api.model
