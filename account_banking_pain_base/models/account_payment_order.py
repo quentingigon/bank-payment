@@ -489,15 +489,8 @@ class AccountPaymentOrder(models.Model):
     def generate_remittance_info_block(self, parent_node, line, gen_args):
         remittance_info = etree.SubElement(
             parent_node, 'RmtInf')
-        if line.local_instrument == "LSV+":
-            remittance_info_unstructured = etree.SubElement(
-                remittance_info, 'Ustrd')
-            remittance_info_unstructured.text = self._prepare_field(
-                    'Remittance Unstructured Information',
-                    'line.communication', {'line': line}, 140,
-                    gen_args=gen_args)
 
-        if line.communication_type == 'normal' and line.local_instrument != "LSV+":
+        if line.communication_type == 'normal':
             remittance_info_unstructured = etree.SubElement(
                 remittance_info, 'Ustrd')
             remittance_info_unstructured.text = \
